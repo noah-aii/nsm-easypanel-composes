@@ -14,7 +14,7 @@ Fork de `easypanel-io/compose@19-01-2026/supabase`. Mudança: adicionado service
 
 Trocar source git do service `supabase` do project `n8n` para:
 
-- repo: `https://github.com/AlisonPinha/nsm-easypanel-composes.git`
+- repo: `https://github.com/noah-aii/nsm-easypanel-composes.git`
 - ref: `main`
 - rootPath: `/supabase/code`
 - composeFile: `docker-compose.yml`
