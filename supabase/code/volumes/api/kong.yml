@@ -12,6 +12,16 @@ consumers:
   - username: service_role
     keyauth_credentials:
       - key: $SUPABASE_SERVICE_KEY
+  # /pg/ (pg-meta, SQL como superusuário) com chave própria, fora da service role (07/10/2026,
+  # auditoria de conferência do nsm-reports, P3-1). As chaves vêm de volumes/api/pg-keys.env,
+  # gerado no servidor e fora do git. pg_admin: migrations, scripts e o Vigia do n8n.
+  # pg_app_nsm_reports: o app, que o Kong força a entrar como nsm_reports_app (plugin no fim).
+  - username: pg_admin
+    keyauth_credentials:
+      - key: $PG_ADMIN_KEY
+  - username: pg_app_nsm_reports
+    keyauth_credentials:
+      - key: $PG_NSM_REPORTS_KEY
 
 ###
 ### Access Control List
@@ -21,6 +31,10 @@ acls:
     group: anon
   - consumer: service_role
     group: admin
+  - consumer: pg_admin
+    group: pg_admin
+  - consumer: pg_app_nsm_reports
+    group: pg_app
 
 ###
 ### Dashboard credentials
@@ -223,7 +237,10 @@ services:
         config:
           hide_groups_header: true
           allow:
+            # admin (service role) sai na etapa 2, depois que todos os usuários do /pg/ trocarem de chave
             - admin
+            - pg_admin
+            - pg_app
 
   ## Block access to /api/mcp
   - name: mcp-blocker
@@ -281,3 +298,20 @@ services:
       - name: basic-auth
         config:
           hide_credentials: true
+
+###
+### Plugins por consumidor
+###
+plugins:
+  # A chave do app só entra no pg-meta como nsm_reports_app: o Kong troca qualquer cabeçalho de
+  # conexão pelo do papel limitado, então nem a chave do app vazada vira superusuário.
+  - name: request-transformer
+    service: meta
+    consumer: pg_app_nsm_reports
+    config:
+      remove:
+        headers:
+          - x-connection-encrypted
+      add:
+        headers:
+          - 'x-connection-encrypted:$PG_NSM_REPORTS_CONN'

@@ -66,6 +66,9 @@ services:
     volumes:
       # https://github.com/supabase/supabase/issues/12661
       - ./volumes/api/kong.yml:/home/kong/temp.yml:ro,z
+      # Chaves do /pg/ (PG_ADMIN_KEY, PG_NSM_REPORTS_KEY, PG_NSM_REPORTS_CONN), geradas no servidor
+      # e fora do git (07/10/2026). Sem o arquivo, o Kong não sobe: melhor que subir com chave vazia.
+      - ./volumes/api/pg-keys.env:/home/kong/pg-keys.env:ro,z
     depends_on:
       analytics:
         condition: service_healthy
@@ -82,7 +85,9 @@ services:
       DASHBOARD_USERNAME: ${DASHBOARD_USERNAME}
       DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD}
     # https://unix.stackexchange.com/a/294837
-    entrypoint: bash -c 'eval "echo \"$$(cat ~/temp.yml)\"" > ~/kong.yml &&
+    entrypoint: bash -c 'set -a && . /home/kong/pg-keys.env && set +a &&
+      [ -n "$$PG_ADMIN_KEY" ] && [ -n "$$PG_NSM_REPORTS_KEY" ] && [ -n "$$PG_NSM_REPORTS_CONN" ] &&
+      eval "echo \"$$(cat ~/temp.yml)\"" > ~/kong.yml &&
       /docker-entrypoint.sh kong docker-start'
 
   auth:
