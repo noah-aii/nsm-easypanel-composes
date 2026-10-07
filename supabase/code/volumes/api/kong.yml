@@ -237,8 +237,7 @@ services:
         config:
           hide_groups_header: true
           allow:
-            # admin (service role) sai na etapa 2, depois que todos os usuários do /pg/ trocarem de chave
-            - admin
+            # Sem a service role (07/10/2026, etapa 2): vazada, ela não vira mais superusuário no banco.
             - pg_admin
             - pg_app
 
