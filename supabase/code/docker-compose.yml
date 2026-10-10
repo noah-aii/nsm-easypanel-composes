@@ -11,8 +11,6 @@ services:
 
   studio:
     image: supabase/studio:2025.12.17-sha-43f4f7f
-    # Desligado em 10/10/2026 (auditoria do srv930906): sem uso medido. Para ligar: docker compose --profile desligado up -d studio
-    profiles: ["desligado"]
     restart: unless-stopped
     healthcheck:
       test:
@@ -26,6 +24,9 @@ services:
       timeout: 10s
       interval: 5s
       retries: 3
+    depends_on:
+      analytics:
+        condition: service_healthy
     environment:
       # Binds nestjs listener to both IPv4 and IPv6 network interfaces
       HOSTNAME: "::"
@@ -61,11 +62,13 @@ services:
 
   kong:
     image: kong:2.8.1
-    mem_limit: 384m
     restart: unless-stopped
     volumes:
       # https://github.com/supabase/supabase/issues/12661
       - ./volumes/api/kong.yml:/home/kong/temp.yml:ro,z
+    depends_on:
+      analytics:
+        condition: service_healthy
     environment:
       KONG_DATABASE: "off"
       KONG_DECLARATIVE_CONFIG: /home/kong/kong.yml
@@ -84,8 +87,6 @@ services:
 
   auth:
     image: supabase/gotrue:v2.184.0
-    # Desligado em 10/10/2026 (auditoria do srv930906): sem uso medido. Para ligar: docker compose --profile desligado up -d auth
-    profiles: ["desligado"]
     restart: unless-stopped
     healthcheck:
       test:
@@ -103,6 +104,8 @@ services:
     depends_on:
       db:
         # Disable this if you are using an external Postgres database
+        condition: service_healthy
+      analytics:
         condition: service_healthy
     environment:
       GOTRUE_API_HOST: 0.0.0.0
@@ -166,11 +169,12 @@ services:
 
   rest:
     image: postgrest/postgrest:v14.1
-    mem_limit: 256m
     restart: unless-stopped
     depends_on:
       db:
         # Disable this if you are using an external Postgres database
+        condition: service_healthy
+      analytics:
         condition: service_healthy
     environment:
       PGRST_DB_URI: postgres://authenticator:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
@@ -185,12 +189,12 @@ services:
   realtime:
     # This container name looks inconsistent but is correct because realtime constructs tenant id by parsing the subdomain
     image: supabase/realtime:v2.68.0
-    # Desligado em 10/10/2026 (auditoria do srv930906): sem uso medido. Para ligar: docker compose --profile desligado up -d realtime
-    profiles: ["desligado"]
     restart: unless-stopped
     depends_on:
       db:
         # Disable this if you are using an external Postgres database
+        condition: service_healthy
+      analytics:
         condition: service_healthy
     healthcheck:
       test:
@@ -223,7 +227,6 @@ services:
   # To use S3 backed storage: docker compose -f docker-compose.yml -f docker-compose.s3.yml up
   storage:
     image: supabase/storage-api:v1.33.0
-    mem_limit: 384m
     restart: unless-stopped
     volumes:
       - ./volumes/storage:/var/lib/storage:z
@@ -267,7 +270,6 @@ services:
 
   imgproxy:
     image: darthsim/imgproxy:v3.8.0
-    mem_limit: 256m
     restart: unless-stopped
     volumes:
       - ./volumes/storage:/var/lib/storage:z
@@ -284,11 +286,12 @@ services:
 
   meta:
     image: supabase/postgres-meta:v0.95.1
-    mem_limit: 256m
     restart: unless-stopped
     depends_on:
       db:
         # Disable this if you are using an external Postgres database
+        condition: service_healthy
+      analytics:
         condition: service_healthy
     environment:
       PG_META_PORT: 8080
@@ -301,11 +304,12 @@ services:
 
   functions:
     image: supabase/edge-runtime:v1.69.28
-    # Desligado em 10/10/2026 (auditoria do srv930906): sem uso medido. Para ligar: docker compose --profile desligado up -d functions
-    profiles: ["desligado"]
     restart: unless-stopped
     volumes:
       - ./volumes/functions:/home/deno/functions:Z
+    depends_on:
+      analytics:
+        condition: service_healthy
     environment:
       JWT_SECRET: ${JWT_SECRET}
       SUPABASE_URL: http://kong:8000
@@ -318,8 +322,6 @@ services:
 
   analytics:
     image: supabase/logflare:1.27.0
-    # Desligado em 10/10/2026 (auditoria do srv930906): sem uso medido. Para ligar: docker compose --profile desligado up -d analytics
-    profiles: ["desligado"]
     restart: unless-stopped
     # Uncomment to use Big Query backend for analytics
     # volumes:
@@ -360,7 +362,6 @@ services:
       # Comment out everything below this point if you are using an external Postgres database
   db:
     image: supabase/postgres:15.8.1.085
-    mem_limit: 1g
     restart: unless-stopped
     volumes:
       - ./volumes/db/realtime.sql:/docker-entrypoint-initdb.d/migrations/99-realtime.sql:Z
@@ -385,6 +386,9 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    depends_on:
+      vector:
+        condition: service_healthy
     environment:
       POSTGRES_HOST: /var/run/postgresql
       PGPORT: ${POSTGRES_PORT}
@@ -406,8 +410,6 @@ services:
 
   vector:
     image: timberio/vector:0.28.1-alpine
-    # Desligado em 10/10/2026 (auditoria do srv930906): sem uso medido. Para ligar: docker compose --profile desligado up -d vector
-    profiles: ["desligado"]
     restart: unless-stopped
     volumes:
       - ./volumes/logs/vector.yml:/etc/vector/vector.yml:ro,z
@@ -434,7 +436,6 @@ services:
   # Update the DATABASE_URL if you are using an external Postgres database
   supavisor:
     image: supabase/supavisor:2.7.4
-    mem_limit: 256m
     restart: unless-stopped
     volumes:
       - ./volumes/pooler/pooler.exs:/etc/pooler/pooler.exs:ro,z
@@ -454,6 +455,8 @@ services:
       retries: 5
     depends_on:
       db:
+        condition: service_healthy
+      analytics:
         condition: service_healthy
     environment:
       PORT: 4000
@@ -483,8 +486,6 @@ services:
 
   metabase:
     image: metabase/metabase:v0.58.7
-    # Desligado em 10/10/2026 (auditoria do srv930906): sem uso medido. Para ligar: docker compose --profile desligado up -d metabase
-    profiles: ["desligado"]
     restart: unless-stopped
     depends_on:
       db:
