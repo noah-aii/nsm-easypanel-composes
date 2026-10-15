@@ -14,6 +14,8 @@ services:
 
   studio:
     image: supabase/studio:2026.04.27-sha-5f60601
+    # Desligado desde 10/10/2026 (auditoria do srv930906): sem uso, só o db roda. Para ligar: docker compose --profile desligado up -d studio
+    profiles: ["desligado"]
     restart: unless-stopped
     healthcheck:
       test:
@@ -76,6 +78,8 @@ services:
 
   kong:
     image: kong/kong:3.9.1
+    # Desligado desde 10/10/2026 (auditoria do srv930906): sem uso, só o db roda. Para ligar: docker compose --profile desligado up -d kong
+    profiles: ["desligado"]
     restart: unless-stopped
     networks:
       default:
@@ -119,6 +123,8 @@ services:
 
   auth:
     image: supabase/gotrue:v2.186.0
+    # Desligado desde 10/10/2026 (auditoria do srv930906): sem uso, só o db roda. Para ligar: docker compose --profile desligado up -d auth
+    profiles: ["desligado"]
     restart: unless-stopped
     healthcheck:
       test:
@@ -253,6 +259,8 @@ services:
 
   rest:
     image: postgrest/postgrest:v14.8
+    # Desligado desde 10/10/2026 (auditoria do srv930906): sem uso, só o db roda. Para ligar: docker compose --profile desligado up -d rest
+    profiles: ["desligado"]
     restart: unless-stopped
     depends_on:
       db:
@@ -278,6 +286,8 @@ services:
   realtime:
     # This container name looks inconsistent but is correct because realtime constructs tenant id by parsing the subdomain
     image: supabase/realtime:v2.76.5
+    # Desligado desde 10/10/2026 (auditoria do srv930906): sem uso, só o db roda. Para ligar: docker compose --profile desligado up -d realtime
+    profiles: ["desligado"]
     restart: unless-stopped
     depends_on:
       db:
@@ -324,6 +334,8 @@ services:
   # To use S3 backed storage: docker compose -f docker-compose.yml -f docker-compose.s3.yml up
   storage:
     image: supabase/storage-api:v1.48.26
+    # Desligado desde 10/10/2026 (auditoria do srv930906): sem uso, só o db roda. Para ligar: docker compose --profile desligado up -d storage
+    profiles: ["desligado"]
     restart: unless-stopped
     depends_on:
       db:
@@ -386,6 +398,8 @@ services:
 
   imgproxy:
     image: darthsim/imgproxy:v3.30.1
+    # Desligado desde 10/10/2026 (auditoria do srv930906): sem uso, só o db roda. Para ligar: docker compose --profile desligado up -d imgproxy
+    profiles: ["desligado"]
     restart: unless-stopped
     volumes:
       - ./volumes/storage:/var/lib/storage:z
@@ -403,6 +417,8 @@ services:
 
   meta:
     image: supabase/postgres-meta:v0.96.3
+    # Desligado desde 10/10/2026 (auditoria do srv930906): sem uso, só o db roda. Para ligar: docker compose --profile desligado up -d meta
+    profiles: ["desligado"]
     restart: unless-stopped
     depends_on:
       db:
@@ -419,6 +435,8 @@ services:
 
   functions:
     image: supabase/edge-runtime:v1.71.2
+    # Desligado desde 10/10/2026 (auditoria do srv930906): sem uso, só o db roda. Para ligar: docker compose --profile desligado up -d functions
+    profiles: ["desligado"]
     restart: unless-stopped
     volumes:
       - ./volumes/functions:/home/deno/functions:Z
@@ -444,6 +462,8 @@ services:
 
   analytics:
     image: supabase/logflare:1.36.1
+    # Desligado desde 10/10/2026 (auditoria do srv930906): sem uso, só o db roda. Para ligar: docker compose --profile desligado up -d analytics
+    profiles: ["desligado"]
     restart: unless-stopped
     # ports:
     #   - 4000:4000
@@ -486,6 +506,8 @@ services:
       # Comment out everything below this point if you are using an external Postgres database
   db:
     image: supabase/postgres:15.8.1.085
+    # Limite que antes só existia por docker update (super auditoria de 15/10/2026)
+    mem_limit: 1g
     restart: unless-stopped
     volumes:
       - ./volumes/db/realtime.sql:/docker-entrypoint-initdb.d/migrations/99-realtime.sql:Z
@@ -531,6 +553,8 @@ services:
 
   vector:
     image: timberio/vector:0.53.0-alpine
+    # Desligado desde 10/10/2026 (auditoria do srv930906): sem uso, só o db roda. Para ligar: docker compose --profile desligado up -d vector
+    profiles: ["desligado"]
     restart: unless-stopped
     volumes:
       - ./volumes/logs/vector.yml:/etc/vector/vector.yml:ro,z
@@ -557,6 +581,8 @@ services:
   # Update the DATABASE_URL if you are using an external Postgres database
   supavisor:
     image: supabase/supavisor:2.7.4
+    # Desligado desde 10/10/2026 (auditoria do srv930906): sem uso, só o db roda. Para ligar: docker compose --profile desligado up -d supavisor
+    profiles: ["desligado"]
     restart: unless-stopped
     volumes:
       - ./volumes/pooler/pooler.exs:/etc/pooler/pooler.exs:ro,z
