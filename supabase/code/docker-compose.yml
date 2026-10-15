@@ -61,7 +61,7 @@ services:
 
   kong:
     image: kong:2.8.1
-    mem_limit: 384m
+    mem_limit: 512m  # 384m batia no teto (372 MB anônimos, 14 eventos max em 15/10/2026)
     restart: unless-stopped
     volumes:
       # https://github.com/supabase/supabase/issues/12661
